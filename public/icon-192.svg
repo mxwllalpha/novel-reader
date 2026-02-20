@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="42" fill="#6366f1"/>
+  <g fill="white">
+    <!-- Book icon -->
+    <path d="M56 48h80c4.4 0 8 3.6 8 8v88c0 4.4-3.6 8-8 8H56c-4.4 0-8-3.6-8-8V56c0-4.4 3.6-8 8-8z"/>
+    <path d="M56 48v96c0 4.4-3.6 8-8 8s-8-3.6-8-8V56c0-4.4 3.6-8 8-8s8 3.6 8 8z" fill-opacity="0.5"/>
+    <path d="M136 48v96c0 4.4 3.6 8 8 8s8-3.6 8-8V56c0-4.4-3.6-8-8-8s-8 3.6-8 8z" fill-opacity="0.5"/>
+    <!-- Pages -->
+    <rect x="62" y="62" width="68" height="4" rx="2" fill-opacity="0.9"/>
+    <rect x="62" y="74" width="68" height="4" rx="2" fill-opacity="0.9"/>
+    <rect x="62" y="86" width="52" height="4" rx="2" fill-opacity="0.9"/>
+    <rect x="62" y="98" width="60" height="4" rx="2" fill-opacity="0.9"/>
+    <rect x="62" y="110" width="44" height="4" rx="2" fill-opacity="0.9"/>
+  </g>
+</svg>

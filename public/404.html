@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline - NovelReader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .offline-container {
+      text-align: center;
+      background: white;
+      border-radius: 1rem;
+      padding: 3rem 2rem;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .offline-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: #f3f4f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6366f1;
+    }
+
+    .offline-icon svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #6b7280;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .retry-button {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .retry-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .cached-pages {
+      margin-top: 2rem;
+      text-align: left;
+    }
+
+    .cached-pages h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.75rem;
+    }
+
+    .cached-pages ul {
+      list-style: none;
+    }
+
+    .cached-pages li {
+      margin-bottom: 0.5rem;
+    }
+
+    .cached-pages a {
+      color: #6366f1;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .cached-pages a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 1l22 22"></path>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <path d="M12 20h.01"></path>
+      </svg>
+    </div>
+    <h1>You're Offline</h1>
+    <p>It looks like you've lost your internet connection. Check your connection and try again.</p>
+    <button class="retry-button" onclick="location.reload()">Try Again</button>
+
+    <div class="cached-pages">
+      <h2>Browse Cached Pages:</h2>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/latest">Latest Novels</a></li>
+        <li><a href="/popular">Popular Novels</a></li>
+        <li><a href="/completed">Completed Novels</a></li>
+        <li><a href="/search">Search</a></li>
+        <li><a href="/bookmarks">My Bookmarks</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Check if connection is restored
+    window.addEventListener('online', function() {
+      location.reload();
+    });
+
+    // Show online status
+    console.log('Online status:', navigator.onLine ? 'online' : 'offline');
+
+    window.addEventListener('online', () => console.log('Connection restored!'));
+    window.addEventListener('offline', () => console.log('Connection lost!'));
+  </script>
+</body>
+</html>

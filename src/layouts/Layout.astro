@@ -1,4 +1,6 @@
 ---
+import PWAInstall from '../components/PWAInstall.astro';
+
 interface Props {
   title: string;
   description?: string;
@@ -88,6 +90,10 @@ const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
 </head>
 <body>
   <slot />
+
+  <!-- PWA Install Prompt -->
+  <PWAInstall />
+
   <script>
     // Theme toggle functionality
     function initTheme() {

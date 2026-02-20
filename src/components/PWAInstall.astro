@@ -1,0 +1,286 @@
+---
+/**
+ * PWA Install Prompt Component
+ * Shows install button when app can be installed as PWA
+ */
+---
+
+<template id="pwa-install-template">
+  <div id="pwa-install-banner" class="pwa-install-banner" hidden>
+    <div class="pwa-install-content">
+      <div class="pwa-install-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      </div>
+      <div class="pwa-install-text">
+        <div class="pwa-install-title">Install NovelReader</div>
+        <div class="pwa-install-description">Read novels offline with the best experience</div>
+      </div>
+      <button id="pwa-install-button" class="pwa-install-button">Install</button>
+      <button id="pwa-dismiss-button" class="pwa-dismiss-button" aria-label="Dismiss">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</template>
+
+<style>
+  .pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .pwa-install-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .pwa-install-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+
+  .pwa-install-text {
+    flex: 1;
+  }
+
+  .pwa-install-title {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+  }
+
+  .pwa-install-description {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .pwa-install-button {
+    flex-shrink: 0;
+    padding: 0.625rem 1.5rem;
+    background-color: white;
+    color: var(--accent-primary);
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .pwa-install-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .pwa-dismiss-button {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .pwa-dismiss-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  @media (max-width: 480px) {
+    .pwa-install-banner {
+      padding: 0.75rem;
+    }
+
+    .pwa-install-content {
+      gap: 0.75rem;
+    }
+
+    .pwa-install-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .pwa-install-title {
+      font-size: 0.875rem;
+    }
+
+    .pwa-install-description {
+      font-size: 0.75rem;
+    }
+
+    .pwa-install-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Auto-hide after 30 seconds of inactivity */
+  .pwa-install-banner[hidden] {
+    display: none;
+  }
+</style>
+
+<script define:vars={{}}>
+  // PWA Install Prompt Handler
+  let deferredPrompt: any = null;
+  let installBanner: HTMLElement | null = null;
+  let dismissTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  // Clone template on load
+  function initInstallPrompt() {
+    const template = document.getElementById('pwa-install-template') as HTMLTemplateElement;
+    if (!template) return;
+
+    const clone = template.content.cloneNode(true) as DocumentFragment;
+    document.body.appendChild(clone);
+    installBanner = document.getElementById('pwa-install-banner');
+
+    // Set up event listeners
+    const installButton = document.getElementById('pwa-install-button');
+    const dismissButton = document.getElementById('pwa-dismiss-button');
+
+    installButton?.addEventListener('click', () => {
+      installPWA();
+    });
+
+    dismissButton?.addEventListener('click', () => {
+      dismissBanner();
+    });
+  }
+
+  // Listen for beforeinstallprompt event
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+
+    // Show install banner after a delay
+    setTimeout(() => {
+      showInstallBanner();
+    }, 3000);
+  });
+
+  // Listen for app installed event
+  window.addEventListener('appinstalled', () => {
+    // App was installed, hide the banner
+    dismissBanner();
+    // Clear the deferredPrompt
+    deferredPrompt = null;
+
+    // Optionally show a success message
+    console.log('[PWA] App was installed');
+
+    // Save installation status
+    localStorage.setItem('pwa-installed', 'true');
+  });
+
+  function showInstallBanner() {
+    // Check if already dismissed or installed
+    const wasDismissed = localStorage.getItem('pwa-install-dismissed');
+    const wasInstalled = localStorage.getItem('pwa-installed');
+
+    if (wasDismissed || wasInstalled || !installBanner || !deferredPrompt) {
+      return;
+    }
+
+    installBanner.hidden = false;
+
+    // Auto-hide after 30 seconds
+    if (dismissTimeout) clearTimeout(dismissTimeout);
+    dismissTimeout = setTimeout(() => {
+      dismissBanner();
+    }, 30000);
+  }
+
+  function dismissBanner() {
+    if (installBanner) {
+      installBanner.hidden = true;
+    }
+    // Remember dismissal for 7 days
+    localStorage.setItem('pwa-install-dismissed', 'true');
+    setTimeout(() => {
+      localStorage.removeItem('pwa-install-dismissed');
+    }, 7 * 24 * 60 * 60 * 1000);
+
+    if (dismissTimeout) clearTimeout(dismissTimeout);
+  }
+
+  async function installPWA() {
+    if (!deferredPrompt) {
+      console.log('[PWA] No deferred prompt available');
+      return;
+    }
+
+    // Show the install prompt
+    deferredPrompt.prompt();
+
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+
+    console.log(`[PWA] User response: ${outcome}`);
+
+    // Clear the deferredPrompt
+    deferredPrompt = null;
+
+    // Hide the banner regardless of outcome
+    dismissBanner();
+  }
+
+  // Check if running as standalone PWA
+  function isRunningStandalone(): boolean {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    );
+  }
+
+  // Initialize on load
+  if (typeof window !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initInstallPrompt);
+    } else {
+      initInstallPrompt();
+    }
+
+    // Log PWA status
+    console.log('[PWA] Running standalone:', isRunningStandalone());
+    console.log('[PWA] Service Worker:', 'serviceWorker' in navigator);
+  }
+</script>

@@ -1,0 +1,35 @@
+# robots.txt for NovelReader
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Disallow admin/private areas (if any in future)
+# Disallow: /admin/
+# Disallow: /api/
+
+# Crawl-delay (optional, polite to servers)
+# Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://novel-reader.pages.dev/sitemap.xml
+
+# Popular crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Block unwanted crawlers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

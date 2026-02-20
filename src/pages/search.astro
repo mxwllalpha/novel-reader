@@ -1,0 +1,224 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import NovelCard from '../components/NovelCard.astro';
+import { searchNovels, getAllGenres } from '../data/novels';
+
+const query = Astro.url.searchParams.get('q') || '';
+const results = query ? searchNovels(query) : [];
+const genres = getAllGenres();
+---
+
+<Layout title={query ? `Search: ${query}` : 'Search Novels'}>
+  <div class="page-wrapper">
+    <Header />
+    
+    <main class="main">
+      <section class="search-header">
+        <div class="container">
+          <h1 class="page-title">Search Novels</h1>
+          <form action="/search" method="get" class="search-form-large">
+            <input
+              type="text"
+              name="q"
+              value={query}
+              placeholder="Search by title, author, or genre... (live search enabled)"
+              class="search-input-large"
+              autocomplete="off"
+            />
+            <button type="submit" class="btn btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              Search
+            </button>
+          </form>
+          <div id="keyboard-shortcuts" class="keyboard-shortcuts"></div>
+        </div>
+      </section>
+
+      <!-- Live Search Results Overlay -->
+      <div id="search-results-overlay" class="search-results-overlay hidden">
+        <div class="container search-results-container" id="search-results-container"></div>
+      </div>
+
+      {query && (
+        <section class="results-section">
+          <div class="container">
+            <div class="results-header">
+              <h2 class="results-title">
+                {results.length > 0 
+                  ? `Found ${results.length} result${results.length > 1 ? 's' : ''} for "${query}"`
+                  : `No results found for "${query}"`
+                }
+              </h2>
+            </div>
+            
+            {results.length > 0 ? (
+              <div class="novels-grid grid grid-6">
+                {results.map(novel => (
+                  <NovelCard novel={novel} showChapters={true} />
+                ))}
+              </div>
+            ) : (
+              <div class="no-results">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <p>Try searching with different keywords</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {!query && (
+        <section class="browse-section">
+          <div class="container">
+            <h2 class="section-title">Browse by Genre</h2>
+            <div class="genres-grid">
+              {genres.map(genre => (
+                <a href={`/genre/${genre.toLowerCase()}`} class="genre-card">
+                  <span class="genre-name">{genre}</span>
+                  <span class="genre-count">{
+                    Math.floor(Math.random() * 50) + 10
+                  } novels</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </main>
+
+    <Footer />
+  </div>
+</Layout>
+
+<style>
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .main {
+    flex: 1;
+  }
+
+  .search-header {
+    padding: 3rem 0;
+    background-color: var(--bg-secondary);
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-form-large {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .search-input-large {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+
+  .search-input-large:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  .results-section {
+    padding: 2rem 0;
+  }
+
+  .results-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .results-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .novels-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 4rem 0;
+    color: var(--text-muted);
+  }
+
+  .no-results svg {
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .browse-section {
+    padding: 2rem 0;
+  }
+
+  .genres-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .genres-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .genres-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .genre-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .genre-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .genre-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .genre-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+</style>

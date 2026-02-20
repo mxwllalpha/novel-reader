@@ -1,0 +1,117 @@
+---
+---
+
+<div class="featured-card skeleton-featured">
+  <div class="skeleton-featured-cover">
+    <div class="skeleton-shimmer"></div>
+  </div>
+  <div class="featured-info">
+    <div class="skeleton-label"></div>
+    <div class="skeleton-title"></div>
+    <div class="skeleton-author"></div>
+    <div class="skeleton-description"></div>
+    <div class="skeleton-meta"></div>
+  </div>
+</div>
+
+<style>
+  .skeleton-featured {
+    pointer-events: none;
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .skeleton-featured-cover {
+    aspect-ratio: 16/9;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+  }
+
+  .skeleton-shimmer {
+    width: 100%;
+    height: 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .featured-info {
+    padding: 1.5rem;
+    flex: 1;
+  }
+
+  .skeleton-label {
+    height: 1rem;
+    width: 100px;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    margin-bottom: 0.75rem;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .skeleton-title {
+    height: 1.4rem;
+    width: 90%;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.1s;
+  }
+
+  .skeleton-author {
+    height: 0.9rem;
+    width: 50%;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.15s;
+  }
+
+  .skeleton-description {
+    height: 1rem;
+    width: 100%;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.2s;
+  }
+
+  .skeleton-description::after {
+    content: '';
+    display: block;
+    height: 1rem;
+    width: 80%;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    margin-top: 0.25rem;
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.25s;
+  }
+
+  .skeleton-meta {
+    height: 1rem;
+    width: 60%;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.3s;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+</style>

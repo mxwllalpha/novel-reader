@@ -1,0 +1,16 @@
+# Cloudflare Pages Configuration
+# Run `npx wrangler pages deploy dist` to deploy
+
+name = "novel-reader"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# Optional: Add KV namespace for caching
+# [[kv_namespaces]]
+# binding = "NOVELS_CACHE"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Optional: Add R2 bucket for images
+# [[r2_buckets]]
+# binding = "COVER_IMAGES"
+# bucket_name = "novel-covers"

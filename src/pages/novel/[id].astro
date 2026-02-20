@@ -1,0 +1,580 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { novels, getNovelById } from '../../data/novels';
+
+export function getStaticPaths() {
+  return novels.map(novel => ({
+    params: { id: novel.id },
+  }));
+}
+
+const { id } = Astro.params;
+const novel = getNovelById(id);
+
+if (!novel) {
+  return Astro.redirect('/404');
+}
+
+const relatedNovels = novels
+  .filter(n => n.id !== novel.id && n.genres.some(g => novel.genres.includes(g)))
+  .slice(0, 6);
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function formatViews(views: number): string {
+  if (views >= 1000000) {
+    return (views / 1000000).toFixed(1) + 'M';
+  }
+  if (views >= 1000) {
+    return (views / 1000).toFixed(1) + 'K';
+  }
+  return views.toString();
+}
+---
+
+<Layout title={novel.title} description={novel.description}>
+  <div class="page-wrapper">
+    <Header />
+    
+    <main class="main">
+      <!-- Novel Header -->
+      <section class="novel-header">
+        <div class="container">
+          <div class="novel-hero">
+            <div class="novel-cover-wrapper">
+              <img
+                src={novel.cover}
+                alt={novel.title}
+                width={360}
+                height={480}
+                loading="eager"
+                decoding="async"
+                class="novel-cover"
+              />
+            </div>
+            
+            <div class="novel-info">
+              <div class="novel-badges">
+                {novel.status === 'Completed' ? (
+                  <span class="badge badge-success">Completed</span>
+                ) : (
+                  <span class="badge">Ongoing</span>
+                )}
+                {novel.genres.slice(0, 2).map(genre => (
+                  <span class="badge badge-secondary">{genre}</span>
+                ))}
+              </div>
+              
+              <h1 class="novel-title">{novel.title}</h1>
+              
+              <div class="novel-author">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>{novel.author}</span>
+              </div>
+
+              <div class="novel-stats">
+                <div class="stat">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span class="stat-value">{novel.rating}</span>
+                  <span class="stat-label">Rating</span>
+                </div>
+                <div class="stat">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <span class="stat-value">{formatViews(novel.views)}</span>
+                  <span class="stat-label">Views</span>
+                </div>
+                <div class="stat">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"></path>
+                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"></path>
+                  </svg>
+                  <span class="stat-value">{novel.chapters.length}</span>
+                  <span class="stat-label">Chapters</span>
+                </div>
+              </div>
+
+              <p class="novel-description">{novel.description}</p>
+
+              <div class="novel-meta">
+                <span>Started: {formatDate(novel.createdAt)}</span>
+                <span>Updated: {formatDate(novel.updatedAt)}</span>
+              </div>
+
+              <div class="novel-actions">
+                {novel.chapters.length > 0 ? (
+                  <>
+                    <a href={`/novel/${novel.id}/${novel.chapters[0].id}`} class="btn btn-primary btn-lg">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      Start Reading
+                    </a>
+                    <a href={`/novel/${novel.id}/${novel.chapters[novel.chapters.length - 1].id}`} class="btn btn-outline btn-lg">
+                      Latest Chapter
+                    </a>
+                  </>
+                ) : (
+                  <span class="badge badge-warning">No chapters available</span>
+                )}
+              </div>
+
+              <div class="novel-genres">
+                {novel.genres.map(genre => (
+                  <a href={`/genre/${genre.toLowerCase()}`} class="genre-link">{genre}</a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chapters Section -->
+      <section class="chapters-section">
+        <div class="container">
+          <div class="chapters-header">
+            <h2 class="section-title">Chapters</h2>
+            <div class="chapter-filter">
+              <select id="chapter-sort" class="input">
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chapters-list" id="chapters-list">
+            {novel.chapters.slice(-100).reverse().map((chapter) => (
+              <a href={`/novel/${novel.id}/${chapter.id}`} class="chapter-item">
+                <span class="chapter-number">Ch. {chapter.number}</span>
+                <span class="chapter-title">{chapter.title}</span>
+                <span class="chapter-date">{formatDate(chapter.createdAt)}</span>
+              </a>
+            ))}
+          </div>
+
+          {novel.chapters.length > 100 && (
+            <div class="load-more">
+              <button class="btn btn-secondary" id="load-more-btn">
+                Load More Chapters
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- Related Novels -->
+      {relatedNovels.length > 0 && (
+        <section class="related-section">
+          <div class="container">
+            <h2 class="section-title">You Might Also Like</h2>
+            <div class="related-grid">
+              {relatedNovels.map(n => (
+                <a href={`/novel/${n.id}`} class="related-item">
+                  <img
+                    src={n.cover}
+                    alt={n.title}
+                    width={200}
+                    height={267}
+                    loading="lazy"
+                    decoding="async"
+                    class="related-cover"
+                  />
+                  <div class="related-info">
+                    <h3 class="related-title">{n.title}</h3>
+                    <p class="related-author">{n.author}</p>
+                    <div class="related-meta">
+                      <span class="related-rating">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        {n.rating}
+                      </span>
+                      <span>{n.chapters.length} Ch</span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </main>
+
+    <Footer />
+  </div>
+</Layout>
+
+<style>
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .main {
+    flex: 1;
+  }
+
+  .novel-header {
+    position: relative;
+    padding: 2rem 0;
+    background-color: var(--bg-secondary);
+  }
+
+  .novel-hero {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  @media (max-width: 767px) {
+    .novel-hero {
+      grid-template-columns: 140px 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .novel-cover-wrapper {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .novel-cover {
+    width: 100%;
+    max-width: 180px;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  @media (max-width: 767px) {
+    .novel-cover {
+      max-width: 140px;
+    }
+  }
+
+  .novel-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .novel-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .novel-title {
+      font-size: 2rem;
+    }
+  }
+
+  .novel-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .novel-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .novel-description {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 768px) {
+    .novel-description {
+      font-size: 1rem;
+    }
+  }
+
+  .novel-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .novel-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .novel-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .genre-link {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--bg-tertiary);
+    border-radius: 9999px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .genre-link:hover {
+    background-color: var(--accent-primary);
+    color: white;
+  }
+
+  .chapters-section {
+    padding: 2rem 0;
+  }
+
+  .chapters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .chapter-filter {
+    max-width: 180px;
+  }
+
+  .chapters-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .chapter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .chapter-item:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-primary);
+  }
+
+  .chapter-number {
+    font-weight: 600;
+    color: var(--accent-primary);
+    min-width: 50px;
+    font-size: 0.875rem;
+  }
+
+  .chapter-title {
+    flex: 1;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chapter-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .chapter-date {
+      display: block;
+    }
+  }
+
+  .load-more {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+
+  .related-section {
+    padding: 2rem 0;
+    background-color: var(--bg-secondary);
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .related-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .related-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+
+  .related-item {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+  }
+
+  .related-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .related-cover {
+    aspect-ratio: 3/4;
+    object-fit: cover;
+  }
+
+  .related-info {
+    padding: 0.75rem;
+  }
+
+  .related-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .related-author {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .related-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.625rem;
+    color: var(--text-secondary);
+  }
+
+  .related-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    color: #f59e0b;
+  }
+</style>
+
+<script define:vars={{ novelId: novel.id, chapters: novel.chapters }}>
+  const allChapters = chapters.map(ch => ({
+    id: ch.id,
+    number: ch.number,
+    title: ch.title,
+    createdAt: ch.createdAt,
+    url: `/novel/${novelId}/${ch.id}`
+  }));
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  function renderChapters(chaptersToRender) {
+    const chaptersList = document.getElementById('chapters-list');
+    if (!chaptersList) return;
+    chaptersList.innerHTML = chaptersToRender.map(ch => `
+      <a href="${ch.url}" class="chapter-item" style="animation: fadeIn 0.3s ease">
+        <span class="chapter-number">Ch. ${ch.number}</span>
+        <span class="chapter-title">${ch.title}</span>
+        <span class="chapter-date">${formatDate(ch.createdAt)}</span>
+      </a>
+    `).join('');
+  }
+
+  const sortSelect = document.getElementById('chapter-sort');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+      const sortOrder = e.target.value;
+      let sortedChapters = sortOrder === 'asc'
+        ? [...allChapters].sort((a, b) => a.number - b.number)
+        : [...allChapters].sort((a, b) => b.number - a.number);
+      renderChapters(sortedChapters);
+    });
+  }
+
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (loadMoreBtn && allChapters.length > 100) {
+    let displayedCount = 100;
+    loadMoreBtn.addEventListener('click', () => {
+      const toAdd = Math.min(100, allChapters.length - displayedCount);
+      if (toAdd > 0) {
+        const currentSort = sortSelect?.value || 'desc';
+        const chaptersToShow = currentSort === 'asc'
+          ? [...allChapters].sort((a, b) => a.number - b.number).slice(0, displayedCount + toAdd)
+          : [...allChapters].sort((a, b) => b.number - a.number).slice(0, displayedCount + toAdd);
+        renderChapters(chaptersToShow);
+        displayedCount += toAdd;
+        if (displayedCount >= allChapters.length) {
+          loadMoreBtn.style.display = 'none';
+        }
+      }
+    });
+  }
+</script>

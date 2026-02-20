@@ -1,0 +1,83 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import NovelCard from '../../components/NovelCard.astro';
+import { novels, getNovelsByGenre, getAllGenres } from '../../data/novels';
+
+export function getStaticPaths() {
+  const genres = getAllGenres();
+  return genres.map(genre => ({
+    params: { genre: genre.toLowerCase() },
+    props: { genreName: genre },
+  }));
+}
+
+const { genre } = Astro.params;
+const { genreName } = Astro.props;
+const genreNovels = getNovelsByGenre(genreName);
+---
+
+<Layout title={`${genreName} Novels`}>
+  <div class="page-wrapper">
+    <Header />
+    
+    <main class="main">
+      <section class="page-header">
+        <div class="container">
+          <h1 class="page-title">{genreName}</h1>
+          <p class="page-description">{genreNovels.length} novels found</p>
+        </div>
+      </section>
+
+      <section class="novels-section">
+        <div class="container">
+          <div class="novels-grid grid grid-6">
+            {genreNovels.map(novel => (
+              <NovelCard novel={novel} showChapters={true} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>
+
+<style>
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .main {
+    flex: 1;
+  }
+
+  .page-header {
+    padding: 2rem 0;
+    background-color: var(--bg-secondary);
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-description {
+    color: var(--text-secondary);
+  }
+
+  .novels-section {
+    padding: 2rem 0;
+  }
+
+  .novels-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+</style>

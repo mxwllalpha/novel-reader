@@ -1,0 +1,16 @@
+{
+  "name": "novel-reader",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build && node scripts/generate-sitemap.js",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.1.0",
+    "sharp": "^0.33.0"
+  }
+}

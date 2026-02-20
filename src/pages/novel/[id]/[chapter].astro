@@ -35,9 +35,22 @@ if (!chapter) {
 const currentIndex = novel.chapters.findIndex(c => c.id === chapterId);
 const prevChapter = currentIndex > 0 ? novel.chapters[currentIndex - 1] : null;
 const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[currentIndex + 1] : null;
+
+// Reading progress and bookmark data
+const progressKey = `reading-progress-${novel.id}`;
+const bookmarkKey = `bookmarks`;
+const novelProgress = { chapterId, scrollPosition: 0 };
 ---
 
 <Layout title={`${chapter.title} - ${novel.title}`}>
+  <!-- Prefetch next chapter for faster navigation -->
+  {nextChapter && (
+    <link rel="prefetch" href={`/novel/${novel.id}/${nextChapter.id}`} />
+  )}
+  {prevChapter && (
+    <link rel="prefetch" href={`/novel/${novel.id}/${prevChapter.id}`} />
+  )}
+
   <div class="reader-page">
     <!-- Reader Header -->
     <header class="reader-header">
@@ -53,6 +66,14 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
           <span class="chapter-info">{chapter.title}</span>
         </div>
         <div class="reader-actions">
+          <button class="action-btn bookmark-btn" id="bookmark-btn" title="Bookmark this chapter" data-bookmarked="false">
+            <svg class="bookmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5-7 7 5 7-5v13z"></path>
+            </svg>
+            <svg class="bookmark-fill-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display: none;">
+              <path d="M19 21l-7-5-7 5V5H5V7l7-5 7 5v13z"></path>
+            </svg>
+          </button>
           <button class="action-btn" id="settings-btn" title="Settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"></circle>
@@ -81,6 +102,11 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
 
     <!-- Reader Content -->
     <main class="reader-content" id="reader-content">
+      <!-- Reading Progress Bar -->
+      <div class="reading-progress-bar" id="reading-progress">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
       <article class="chapter-article">
         <h1 class="chapter-title">{chapter.title}</h1>
         <div class="chapter-content" set:html={chapter.content} />
@@ -167,6 +193,144 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
   </div>
 </Layout>
 
+<script define:vars={{ novelId: novel.id, chapterId: chapterId, chapterNumber: currentIndex + 1, totalChapters: novel.chapters.length }}>
+  // Reading Progress Tracking
+  const PROGRESS_KEY = `reading-progress-${novelId}`;
+  const BOOKMARK_KEY = 'bookmarks';
+
+  // Save reading progress
+  function saveReadingProgress(scrollPercent = 0) {
+    const progress = {
+      chapterId,
+      chapterNumber,
+      scrollPercent,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  }
+
+  // Load and restore reading progress
+  function loadReadingProgress() {
+    const saved = localStorage.getItem(PROGRESS_KEY);
+    if (saved) {
+      try {
+        const progress = JSON.parse(saved);
+        if (progress.chapterId === chapterId) {
+          // Restore scroll position after a short delay
+          setTimeout(() => {
+            const scrollable = document.documentElement || document.body;
+            if (scrollable && progress.scrollPercent > 0) {
+              const scrollHeight = scrollable.scrollHeight - scrollable.clientHeight;
+              scrollable.scrollTop = scrollHeight * (progress.scrollPercent / 100);
+            }
+          }, 100);
+        }
+      } catch (e) {
+        console.error('Failed to parse reading progress:', e);
+      }
+    }
+  }
+
+  // Track scroll position
+  let scrollTimeout: NodeJS.Timeout | null = null;
+  function handleScroll() {
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const scrollable = document.documentElement || document.body;
+      if (scrollable) {
+        const scrollPercent = Math.round(
+          (scrollable.scrollTop / (scrollable.scrollHeight - scrollable.clientHeight)) * 100
+        );
+        saveReadingProgress(scrollPercent);
+
+        // Update progress bar
+        const progressFill = document.getElementById('progress-fill');
+        if (progressFill) {
+          progressFill.style.width = scrollPercent + '%';
+        }
+
+        // Update progress bar width
+        const progressBar = document.getElementById('reading-progress');
+        if (progressBar) {
+          progressBar.style.width = scrollPercent + '%';
+        }
+      }
+    }, 100);
+  }
+
+  // Bookmark functionality
+  function getBookmarks() {
+    try {
+      return JSON.parse(localStorage.getItem(BOOKMARK_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveBookmarks(bookmarks: Record<string, any>) {
+    localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmarks));
+  }
+
+  function isBookmarked() {
+    const bookmarks = getBookmarks();
+    const key = `${novelId}-${chapterId}`;
+    return !!bookmarks[key];
+  }
+
+  function toggleBookmark() {
+    const bookmarks = getBookmarks();
+    const key = `${novelId}-${chapterId}`;
+
+    if (bookmarks[key]) {
+      delete bookmarks[key];
+      updateBookmarkButton(false);
+    } else {
+      bookmarks[key] = {
+        novelId,
+        novelTitle: document.querySelector('.novel-link')?.textContent || '',
+        chapterId,
+        chapterTitle: document.querySelector('.chapter-title')?.textContent || '',
+        chapterNumber,
+        timestamp: Date.now()
+      };
+      updateBookmarkButton(true);
+    }
+
+    saveBookmarks(bookmarks);
+  }
+
+  function updateBookmarkButton(bookmarked: boolean) {
+    const btn = document.getElementById('bookmark-btn');
+    const outlineIcon = btn?.querySelector('.bookmark-icon');
+    const fillIcon = btn?.querySelector('.bookmark-fill-icon');
+
+    if (btn) {
+      btn.setAttribute('data-bookmarked', String(bookmarked));
+      if (outlineIcon) outlineIcon.style.display = bookmarked ? 'none' : 'block';
+      if (fillIcon) fillIcon.style.display = bookmarked ? 'block' : 'none';
+    }
+  }
+
+  // Initialize
+  function init() {
+    // Setup scroll tracking
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Load reading progress
+    loadReadingProgress();
+
+    // Setup bookmark button
+    const bookmarkBtn = document.getElementById('bookmark-btn');
+    if (bookmarkBtn) {
+      updateBookmarkButton(isBookmarked());
+      bookmarkBtn.addEventListener('click', toggleBookmark);
+    }
+  }
+
+  // Run initialization
+  init();
+</script>
+
 <script>
   // Theme toggle
   document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
@@ -219,10 +383,10 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
 
   // Line height
   const lineHeightSlider = document.getElementById('line-height-slider') as HTMLInputElement;
-  
+
   if (lineHeightSlider) {
     lineHeightSlider.value = localStorage.getItem('lineHeight') || '1.8';
-    
+
     lineHeightSlider.addEventListener('input', () => {
       if (readerContent) {
         readerContent.style.lineHeight = lineHeightSlider.value;
@@ -237,7 +401,7 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
 
   // Chapter selector
   const chapterSelect = document.getElementById('chapter-select') as HTMLSelectElement;
-  
+
   chapterSelect?.addEventListener('change', () => {
     const novelId = window.location.pathname.split('/')[2];
     window.location.href = `/novel/${novelId}/${chapterSelect.value}`;
@@ -338,6 +502,18 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
 
   .action-btn:hover {
     background-color: var(--bg-tertiary);
+  }
+
+  .bookmark-btn[data-bookmarked="true"] {
+    color: #f59e0b;
+  }
+
+  .bookmark-btn[data-bookmarked="true"] .bookmark-icon {
+    display: none;
+  }
+
+  .bookmark-btn[data-bookmarked="true"] .bookmark-fill-icon {
+    display: block;
   }
 
   .moon-icon {
@@ -570,5 +746,24 @@ const nextChapter = currentIndex < novel.chapters.length - 1 ? novel.chapters[cu
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Reading Progress Bar */
+  .reading-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background-color: rgba(99, 102, 241, 0.1);
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    width: 0%;
+    transition: width 0.1s ease;
   }
 </style>

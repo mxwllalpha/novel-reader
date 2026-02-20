@@ -1,0 +1,227 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const BOOKMARK_KEY = 'bookmarks';
+
+// Load bookmarks from localStorage
+function getBookmarks() {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      return JSON.parse(localStorage.getItem(BOOKMARK_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+// Get all bookmarks sorted by timestamp (newest first)
+const bookmarks = Object.values(getBookmarks())
+  .sort((a, b) => b.timestamp - a.timestamp);
+
+// Group by novel
+const groupedByNovel = bookmarks.reduce((acc, bookmark) => {
+  if (!acc[bookmark.novelId]) {
+    acc[bookmark.novelId] = {
+      novelId: bookmark.novelId,
+      novelTitle: bookmark.novelTitle,
+      chapters: []
+    };
+  }
+  acc[bookmark.novelId].chapters.push(bookmark);
+  return acc;
+}, {} as Record<string, any>);
+
+const groupedBookmarks = Object.values(groupedByNovel);
+---
+
+<Layout title="My Bookmarks">
+  <div class="page-wrapper">
+    <Header />
+
+    <main class="main">
+      <div class="container">
+        <div class="page-header">
+          <h1 class="page-title">My Bookmarks</h1>
+          <p class="page-description">
+            {groupedBookmarks.length === 0
+              ? 'You haven\'t bookmarked any chapters yet.'
+              : `${groupedBookmarks.length} novel${groupedBookmarks.length > 1 ? 's' : ''} with ${bookmarks.length} bookmarked chapter${bookmarks.length > 1 ? 's' : ''}`
+            }
+          </p>
+        </div>
+
+        {groupedBookmarks.length > 0 ? (
+          <div class="bookmarks-list">
+            {groupedBookmarks.map(group => (
+              <section class="novel-bookmarks">
+                <h2 class="novel-group-title">
+                  <a href={`/novel/${group.novelId}`} class="novel-group-link">
+                    {group.novelTitle}
+                  </a>
+                  <span class="chapter-count">{group.chapters.length} bookmarked</span>
+                </h2>
+                <div class="chapters-grid">
+                  {group.chapters
+                    .sort((a: any, b: any) => a.chapterNumber - b.chapterNumber)
+                    .map(chapter => (
+                    <a href={`/novel/${chapter.novelId}/${chapter.chapterId}`} class="bookmark-item">
+                      <span class="bookmark-chapter-num">Ch. {chapter.chapterNumber}</span>
+                      <span class="bookmark-chapter-title">{chapter.chapterTitle}</span>
+                      <span class="bookmark-date">
+                        {new Date(chapter.timestamp).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M19 21l-7-5-7 5-7 7 5 7-5v13z"></path>
+            </svg>
+            <h3>No bookmarks yet</h3>
+            <p>Bookmark your favorite chapters to find them easily later.</p>
+            <a href="/" class="btn btn-primary">Browse Novels</a>
+          </div>
+        )}
+      </div>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>
+
+<style>
+  .page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main {
+    flex: 1;
+    padding: 2rem 1rem;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-description {
+    color: var(--text-secondary);
+  }
+
+  .bookmarks-list {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .novel-bookmarks {
+    margin-bottom: 2rem;
+  }
+
+  .novel-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+  }
+
+  .novel-group-link {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .novel-group-link:hover {
+    color: var(--accent-primary);
+  }
+
+  .chapter-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: var(--bg-tertiary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+  }
+
+  .chapters-grid {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .bookmark-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .bookmark-item:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-primary);
+  }
+
+  .bookmark-chapter-num {
+    font-weight: 600;
+    color: var(--accent-primary);
+    min-width: 50px;
+  }
+
+  .bookmark-chapter-title {
+    flex: 1;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bookmark-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+  }
+
+  .empty-state svg {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+</style>
